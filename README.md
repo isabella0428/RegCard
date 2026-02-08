@@ -223,6 +223,39 @@ where $D(X, Y)$ is the Jaccard distance $$D(X,Y) = (X - Y) / (X \cup Y) $$ where
 The basic idea is to penalize the difference between the sign of $f(X) - f(Y)$ and $X - Y$. The Jaccard distance comes in handy when $X$ and $Y$ are on a much crazier scale than $f(X), f(Y)$, vice versa. We can also replace Jaccard distance with simple $X - Y$.
 
 We also plan to experiment with other models like tree models.
+
+## Evaluation scripts (baseline & significance)
+
+Two scripts under the repo root support the evaluation requirements:
+
+### 1. Baseline comparison (`baseline_comparison.py`)
+
+Compares the **regularization** approach with a **post-processing** baseline (isotonic projection / pool-adjacent-violators on unregularized predictions) to justify why regularization is preferred.
+
+- **Input:** `logs/grid_search` (same layout as in `result_analysis.ipynb`: each run has `config.json`, `eval.json`, `test_qerror.csv`, `test_monom.csv`).
+- **Output:** A table comparing Unregularized, Post-processing (isotonic), and Regularization (λ=0.1, 1, 10) on Q-error (median, 25th/75th percentiles) and MonoM (mean).
+
+```bash
+python3 baseline_comparison.py [--gs-dir logs/grid_search] [--testset job-cmp-card] [--hid 256] [--out comparison.csv] [--verbose]
+```
+
+Post-processing enforces monotonicity by projecting predictions to be non-increasing in query index (matching the cmp constraints), which typically yields near-perfect MonoM but worse Q-error; regularization improves MonoM while keeping Q-error comparable.
+
+### 2. Statistical significance (`statistical_significance.py`)
+
+Adds **statistical significance** for claimed improvements in Q-error and MonoM (paired t-tests and 95% confidence intervals), so results are not attributed to random variation.
+
+- **Input:** Either two run directories (`--run-a`, `--run-b`) or auto-selected Unregularized vs best Regularized from `logs/grid_search`.
+- **Output:** Paired t-test (t-statistic, p-value), 95% CI for mean difference, and bootstrap 95% CI for median Q-error difference and mean MonoM difference.
+
+```bash
+python3 statistical_significance.py [--gs-dir logs/grid_search] [--testset job-cmp-card] [--hid 256] [--out results.json]
+# Or with explicit runs:
+python3 statistical_significance.py --run-a logs/grid_search/<id1> --run-b logs/grid_search/<id2> [--out results.json]
+```
+
+**Dependencies:** `numpy`, `pandas`. Optional: `scipy` (for exact t-test p-values and t-based CIs); `sklearn` (for isotonic projection in baseline_comparison; otherwise a numpy-only PAV is used).
+
 ## TODOs
 - [x] modify the MSCN model to include the regularization terms
 - [ ] train `RandomForest` and `XGBoost` models to evaluate
