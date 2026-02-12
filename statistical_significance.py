@@ -228,7 +228,7 @@ def main():
         selected_reg = reg_at_lbda.iloc[0]
         run_b_dir = selected_reg.run_dir
         name_a = "Unregularized"
-        name_b = "Regularized (λ={})".format(selected_reg.lbda)
+        name_b = "Regularized (lbda={})".format(selected_reg.lbda)
 
     result = run_significance_tests(
         run_a_dir, run_b_dir, name_a=name_a, name_b=name_b, alpha=args.alpha
